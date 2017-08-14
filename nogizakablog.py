@@ -51,7 +51,6 @@ def download_member_blog(member_name, page, day):
                        post_time[0] + '/' + post_time[1])
             create_dir(member_name.get('zh') + '/' +
                        post_time[0] + '/' + post_time[1] + '/' + daytime)
-           
             # 找到entries里有文本的div
 
             text_dives = entries[i].contents
@@ -237,18 +236,12 @@ def download_main_program(member, days):
 
 def download_by_month(member, month):
     """下载某个月的博客"""
-    # for member in members:
-        # time.sleep(3)
-    # for month in months:
-        # time.sleep(1)
     for i in range(8):
         download_member_blog(member, i + 1, month)
 
 
 def download_by_year(member, years):
     """下载某年的博客"""
-    # for member in members:
-        # time.sleep(3)
     for year in years:
         for month in range(12):
             if len(str(month + 1)) == 1:
@@ -324,13 +317,29 @@ if __name__ == '__main__':
     else:
         current_month = str(current_month)
     current_year = datetime.datetime.today().year
-    # days = [201111, 201201, 201301, 201401, 201501, 201601, 201701]
-    # 输入不带参数，默认下载全员本月的博客
-    if len(sys.argv) == 1 or (len(sys.argv) == 2 and sys.argv[1] == 'update'):
-        days = int(str(current_year) + current_month)
+    days = [201111, 201201, 201301, 201401, 201501, 201601, 201701]
+    #无输入参数，下载全员至今的博客
+    if len(sys.argv) == 1:
+        for member in members:
+            thread1 = threading.Thread(target=download_main_program, args=(member, days))
+            thread1.start()
+    # 输入参数为成员列表，下载某成员至今的博客
+    elif len(sys.argv) == 2 and sys.argv[1] != 'update':
+        member_name_list = change_input_str_to_member_list(sys.argv[1])
+        member_list = []
+        for name in member_name_list:
+            for member in members:
+                if member.get('jp') == name:
+                    member_list.append(member)
+        for member in member_list:
+            thread1 = threading.Thread(target=download_main_program, args=(member, days))
+            thread1.start()
+    # 输入参数为update，下载全员本月的博客
+    elif len(sys.argv) == 2 and sys.argv[1] == 'update':
+        current_time = int(str(current_year) + current_month)
         for member in members:
             thread1 = threading.Thread(
-                target=download_by_month, args=(member, days))
+                target=download_by_month, args=(member, current_time))
             thread1.start()
     # 输入一个参数，且为成员列表,默认下载列表内成员本月的博客
     elif len(sys.argv) == 2:
