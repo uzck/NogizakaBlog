@@ -5,8 +5,8 @@
 ## 使用方法
 首先clone本项目 python版本为3.5.1</br>
 确认安装了beautifulsoup和requests,然后根据需求运行下列命令之一</br>
-`` python nogizakablog.py`` 下载全员至今的博客
-`` python nogizakablog.py update`` 下载全员本月的博客</br>
-`` python nogizakablog.py mai.shiraishi,misa.eto -m 201708,201503`` 下载白石麻衣和卫藤美彩2017/08和2015/03的博客 至于成员的罗马名就请自己去找了
+1. `` python nogizakablog.py`` 下载全员至今的博客
+2. `` python nogizakablog.py update`` 下载全员本月的博客</br>
+3. `` python nogizakablog.py mai.shiraishi,misa.eto -m 201708,201503`` 下载白石麻衣和卫藤美彩2017/08和2015/03的博客 至于成员的罗马名就请自己去找了
 成员名称与下载日期之间必须加上逗号</br>
-`` python nogizakablog.py mai.shiraishi,misa.eto -y 2017,2016`` 下载白石麻衣和卫藤美彩2016年和2017年的博客
+4. `` python nogizakablog.py mai.shiraishi,misa.eto -y 2017,2016`` 下载白石麻衣和卫藤美彩2016年和2017年的博客
