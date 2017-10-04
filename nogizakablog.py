@@ -35,12 +35,15 @@ def download_member_blog(member_name, page, day):
         heads = result.find_all("h1", class_="clearfix")
         for i in range(len(entries)):
             # 遍历图片url
+            duplicate = 0
             blog_title_node = heads[i].find("span", class_="entrytitle")
             blog_title_author = heads[i].find("span", class_="author")
             blog_title = blog_title_node.get_text()  # 博客标题
+            ref = blog_title_node.find('a').get('href')
+            ref = split_ref(ref)
             blog_author = blog_title_author.get_text()  # 博客作者 区分三期生博客
             yearmonth = heads[i].find(
-                "span", class_='yearmonth').get_text()  # 年月
+                "span", class_='yearmonth').get_text()  # 年 月
             daytime = heads[i].find('span', class_='dd1').get_text()  # 日
             image_urls = entries[i].find_all("a")
             image_urls_another_ver = entries[i].find_all("img")
@@ -49,14 +52,14 @@ def download_member_blog(member_name, page, day):
             create_dir(member_name.get('zh') + '/' + post_time[0])
             create_dir(member_name.get('zh') + '/' +
                        post_time[0] + '/' + post_time[1])
-            create_dir(member_name.get('zh') + '/' +
-                       post_time[0] + '/' + post_time[1] + '/' + daytime)
+            create_dir(member_name.get('zh') + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime)
+            if ref == '':
+                return
+            create_dir(member_name.get('zh') + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime + '/' + ref)
             # 找到entries里有文本的div
-
+            final_address = member_name.get('zh') + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime + '/' + ref
             text_dives = entries[i].contents
-            text_save_adress = member_name.get(
-                'zh'
-            ) + "/" + post_time[0] + "/" + post_time[1] + "/" + daytime + "/" + 'content.txt'
+            text_save_adress = member_name.get('zh') + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime + '/' + ref + '/' + 'content.txt'
             download_text(text_dives, text_save_adress,
                           blog_title + '   ' + blog_author)
             if len(image_urls) > 0:
@@ -68,11 +71,11 @@ def download_member_blog(member_name, page, day):
                         if len(title) > 0:
                             info = get_image_file_name(title[0].get('src'))
                             if info != None:
-                                file_dir = member_name.get(
-                                    'zh'
-                                ) + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime
-                                create_dir(file_dir)
-                                file_name = file_dir + '/' + info[3]
+                                # file_dir = member_name.get(
+                                #     'zh'
+                                # ) + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime
+                                # create_dir(file_dir)
+                                file_name = final_address + '/' + info[3]
                                 if not download_pic(url.get('href'), file_name):
                                     download_thumbnail(
                                         title[0].get('src'), file_name)
@@ -81,31 +84,28 @@ def download_member_blog(member_name, page, day):
                     for url in image_urls:
                         info = get_image_file_name(url.get('href'))
                         if info != None:
-                            file_dir = member_name.get(
-                                'zh') + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime
-                            create_dir(file_dir)
-                            file_name = file_dir + '/' + info[3]
+                            file_name = final_address + '/' + info[3]
                             download_from_original_site(
                                 url.get('href'), file_name)
                 else:
                     for url in image_urls:
-                        info = get_image_file_name(url.get('href'))
-                        if info != None:
-                            file_dir = member_name.get(
-                                'zh'
-                            ) + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime
-                            create_dir(file_dir)
-                            file_name = file_dir + '/' + info[3]
-                            download_from_original_site(
-                                url.get('href'), file_name)
-            else:
+                        url_string = url.get('href')
+                        if url_string.startswith('http://dogatch.weblos.jp'):
+                            inner_img = url.find('img').get('src')
+                            info = get_image_file_name(inner_img)
+                            file_name = final_address + '/' + info[3]
+                            download_from_original_site(inner_img, file_name)
+                        else:
+                            info = get_image_file_name(url_string)
+                            if info != None:
+                                file_name = final_address + '/' + info[3]
+                                download_from_original_site(url_string, file_name)
+            if len(image_urls_another_ver) > 0:
                 for image in image_urls_another_ver:
                     info = get_image_file_name(image.get('src'))
+                    # print(image.get('src'))
                     if info != None:
-                        file_dir = member_name.get(
-                            'zh') + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime
-                        create_dir(file_dir)
-                        file_name = file_dir + '/' + info[3]
+                        file_name = final_address + '/' + info[3]
                         download_from_original_site(
                             image.get('src'), file_name)
     except:
@@ -120,6 +120,20 @@ def get_date(yearmonth):
     if result:
         return (result.group(1), result.group(2))
 
+def create_duplicate_dir(dir_name, duplicate):
+    if duplicate == 0:
+        if os.path.exists(dir_name):
+            files = os.listdir(dir_name)
+            for file in files:
+                test = dir_name + '/' + file + '/content.txt'
+                if not os.path.exists(test):
+                    duplicate += 1
+                    os.mkdir(dir_name + '(' + str(duplicate) + ')')
+                else:
+                    return 0
+        else:
+            os.mkdir(dir_name)
+    return duplicate
 
 def create_dir(dir_name):
     """创建文件夹"""
@@ -141,37 +155,41 @@ def is_file_exisst(file_name):
 def download_pic(image_url, image_name):
     """从托管服务器下载图片 距离当前日期超过20天的无法下载"""
     if not is_file_exisst(image_name):
-        result1 = requests.get(image_url)
-        cookie = result1.cookies
-        if cookie != {}:
-            link = image_url.replace(
-                'http://dcimg.awalker.jp/img1.php?id',
-                'http://dcimg.awalker.jp/img2.php?sec_key')
-            # 下载图片前必须先访问img1.php获取cookie
-            result2 = requests.get(link, cookies=cookie, timeout=5)
-            print(image_name + ' 下载中...')
-            try:
+        try:
+            result1 = requests.get(image_url)
+            cookie = result1.cookies
+            if cookie != {}:
+                link = image_url.replace(
+                    'http://dcimg.awalker.jp/img1.php?id',
+                    'http://dcimg.awalker.jp/img2.php?sec_key')
+                # 下载图片前必须先访问img1.php获取cookie
+                result2 = requests.get(link, cookies=cookie, timeout=5)
+                print(image_name + ' 下载中...')
                 with open(image_name, 'wb') as f:
                     for chunk in result2.iter_content(chunk_size=1024):
                         f.write(chunk)
                 print(image_name + ' 下载成功')
                 return True
-            except:
-                print(image_name + ' 超时')
-                return False
+        except:
+            print(image_url + ' 下载失败')
+            download_pic(image_url, image_name)
     return False
 
 
 def download_from_original_site(image_url, image_name):
     """从乃团服务器下载图片"""
     if not is_file_exisst(image_name):
-        result = requests.get(image_url)
-        if result.status_code == 200:
-            print(image_name + ' 下载中')
-            with open(image_name, 'wb') as f:
-                for chunk in result.iter_content(chunk_size=1024):
-                    f.write(chunk)
-            print(image_name + ' 下载完成')
+        try:
+            result = requests.get(image_url)
+            if result.status_code == 200:
+                print(image_name + ' 下载中')
+                with open(image_name, 'wb') as f:
+                    for chunk in result.iter_content(chunk_size=1024):
+                        f.write(chunk)
+                print(image_name + ' 下载完成')
+        except:
+            print(image_url + ' 下载失败')
+            download_from_original_site(image_url, image_name)
 
 
 def download_text(dives, text_name, title):
@@ -208,8 +226,11 @@ def download_thumbnail(image_url, image_name):
 
 def get_image_file_name(image_url):
     """通过正则解析图片文件的名称及发布时间"""
-    pattern = r'[\w.:/]+/(\d{4})/(\d{2})/(\d{2})/([\w/]+.(JPG|jpeg|PNG|jpg)+$)'
+    pattern = r'[\w.:/]+/(\d{4})/(\d{2})/(\d{2})/([\w/]+.(JPG|jpeg|PNG|jpg|png)+$)'
     matcher = re.compile(pattern)
+    # 可能出现空的img标签
+    if image_url == None:
+        return
     result = matcher.match(image_url)
     if result != None:
         name = result.group(4)
@@ -217,6 +238,7 @@ def get_image_file_name(image_url):
             index = name.find('/')
             name = name[index + 1:]
         return (result.group(1), result.group(2), result.group(3), name)
+
 
 
 def download_main_program(member, days):
@@ -233,11 +255,20 @@ def download_main_program(member, days):
                     time.sleep(2)
                 i += 1
 
+def get_correct_thumbnail_url(image_url):
+    """通过正则解析图片文件的名称及发布时间"""
+    pattern = r'([\w.:/]+)/(\d{4}/\d{2}/\d{2}/[\w/]+.(JPG|jpeg|PNG|jpg|png)+$)'
+    matcher = re.compile(pattern)
+    result = matcher.match(image_url)
+    if result != None:
+        return result.group(1)
+
 
 def download_by_month(member, month):
     """下载某个月的博客"""
     for i in range(8):
         download_member_blog(member, i + 1, month)
+        time.sleep(2)
 
 
 def download_by_year(member, years):
@@ -250,6 +281,7 @@ def download_by_year(member, years):
                 month = str(month + 1)
             print(str(year) + str(month))
             download_by_month(member, str(year) + str(month))
+        time.sleep(5)
 
 
 def change_input_str_to_member_list(input_name_str):
@@ -263,6 +295,13 @@ def change_input_str_to_time_list(input_time_str):
     time_list = input_time_str.split(',')
     return time_list
 
+def split_ref(ref_url):
+    pattern = r'[.:/\w]+/([\w]+).php'
+    matcher = re.compile(pattern)
+    result = matcher.match(ref_url)
+    if result != None:
+        return result.group(1)
+    return ''
 
 def can_find_in_member(name, members):
     for member in members:
@@ -270,6 +309,19 @@ def can_find_in_member(name, members):
             return True
     return False
 
+def get_member_list_from_file():
+    members = []
+    with open('input_member', 'r') as f:
+        for i in f.readlines():
+            split_member = i.split(',')
+            en = split_member[0]
+            zh = split_member[1]
+            if not en.startswith('#'):
+                member_struct = {}
+                member_struct['jp'] = en
+                member_struct['zh'] = zh.replace('\n', '')
+                members.append(member_struct)
+    return members
 
 if __name__ == '__main__':
     domain = "http://blog.nogizaka46.com/"  # 域
@@ -307,8 +359,10 @@ if __name__ == '__main__':
         dict(jp='hina.higuchi', zh='樋口日奈'),
         dict(jp='rena.yamazaki', zh='山崎怜奈'),
         dict(jp='miria.watanabe', zh='渡辺みり愛'),
-        dict(jp='maaya.wada', zh='和田まあや')
+        dict(jp='maaya.wada', zh='和田まあや'),
+        dict(jp='hinako.kitano', zh='北野日奈子')
     ]
+    # get_member_list_from_file()
     arg = '/?p='
     arg1 = '&d='
     current_month = datetime.datetime.today().month
@@ -321,8 +375,9 @@ if __name__ == '__main__':
     #无输入参数，下载全员至今的博客
     if len(sys.argv) == 1:
         for member in members:
-            thread1 = threading.Thread(target=download_main_program, args=(member, days))
-            thread1.start()
+            download_main_program(member, days)
+            # thread1 = threading.Thread(target=download_main_program, args=(member, days))
+            # thread1.start()
     # 输入参数为成员列表，下载某成员至今的博客
     elif len(sys.argv) == 2 and sys.argv[1] != 'update':
         member_name_list = change_input_str_to_member_list(sys.argv[1])
@@ -332,12 +387,14 @@ if __name__ == '__main__':
                 if member.get('jp') == name:
                     member_list.append(member)
         for member in member_list:
+            # download_main_program(member, days)
             thread1 = threading.Thread(target=download_main_program, args=(member, days))
             thread1.start()
     # 输入参数为update，下载全员本月的博客
     elif len(sys.argv) == 2 and sys.argv[1] == 'update':
         current_time = int(str(current_year) + current_month)
         for member in members:
+            # download_by_month(member, current_time)
             thread1 = threading.Thread(
                 target=download_by_month, args=(member, current_time))
             thread1.start()
@@ -352,10 +409,21 @@ if __name__ == '__main__':
                     member_list.append(i)
         # download_main_program(member_list, days)
         for i in members:
-            if i.get('jp') == input_member_name:
-                thread1 = threading.Thread(
-                target=download_main_program, args=(i, days))
+            # if i.get('jp') == input_member_name:
+            thread1 = threading.Thread(target=download_main_program, args=(i, days))
             thread1.start()
+            # download_main_program(i, days)
+    elif len(sys.argv) == 3 and sys.argv[1] == '-y':
+        days = change_input_str_to_time_list(sys.argv[2])
+        member_list = get_member_list_from_file()
+        for member in member_list:
+            download_by_year(member, days)
+    elif len(sys.argv) == 3 and sys.argv[1] == '-m':
+        days = change_input_str_to_time_list(sys.argv[2])
+        member_list = get_member_list_from_file()
+        for member in member_list:
+            for month in days:
+                download_by_month(member, month)
     # 输入三个参数，第一个为成员列表，第二个为-m，第三个为时间列表 如：201708表示2017年8月份
     elif len(sys.argv) == 4 and sys.argv[2] == '-m':
         member_name_list = change_input_str_to_member_list(sys.argv[1])
@@ -367,8 +435,9 @@ if __name__ == '__main__':
                     member_list.append(i)
         for member in member_list:
             for month in days:
-                thread1 = threading.Thread(target=download_by_month, args=(member, month))
-                thread1.start()
+                # thread1 = threading.Thread(target=download_by_month, args=(member, month))
+                # thread1.start()
+                download_by_month(member, month)
     elif len(sys.argv) == 4 and sys.argv[2] == '-y':
         member_name_list = change_input_str_to_member_list(sys.argv[1])
         days = change_input_str_to_time_list(sys.argv[3])
@@ -378,7 +447,8 @@ if __name__ == '__main__':
                 if i.get('jp') == member:
                     member_list.append(i)
         for member in member_list:
-            thread1 = threading.Thread(target=download_by_year, args=(member, days))
-            thread1.start()
+            download_by_year(member, days)
+            # thread1 = threading.Thread(target=download_by_year, args=(member, days))
+            # thread1.start()
 
 
