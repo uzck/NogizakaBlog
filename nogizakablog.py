@@ -71,10 +71,6 @@ def download_member_blog(member_name, page, day):
                         if len(title) > 0:
                             info = get_image_file_name(title[0].get('src'))
                             if info != None:
-                                # file_dir = member_name.get(
-                                #     'zh'
-                                # ) + '/' + post_time[0] + '/' + post_time[1] + '/' + daytime
-                                # create_dir(file_dir)
                                 file_name = final_address + '/' + info[3]
                                 if not download_pic(url.get('href'), file_name):
                                     download_thumbnail(
@@ -226,7 +222,7 @@ def download_thumbnail(image_url, image_name):
 
 def get_image_file_name(image_url):
     """通过正则解析图片文件的名称及发布时间"""
-    pattern = r'[\w.:/]+/(\d{4})/(\d{2})/(\d{2})/([\w/]+.(JPG|jpeg|PNG|jpg|png)+$)'
+    pattern = r'[\w.:/]+/(\d{4})/(\d{2})/(\d{2})/([\w\-_/]+.(JPG|jpeg|PNG|jpg|png)+$)'
     matcher = re.compile(pattern)
     # 可能出现空的img标签
     if image_url == None:
@@ -344,7 +340,18 @@ if __name__ == '__main__':
         dict(jp='minami.hoshino', zh='星野南'),
         dict(jp='sayuri.matsumura', zh='松村沙友理'),
         dict(jp='ranze.terada', zh='寺田兰世'),
-        dict(jp='third', zh='三期生'),
+        dict(jp='yuuki.yoda', zh='与田祐希'),
+	    dict(jp='riria.itou', zh='伊藤理々杏'),
+	    dict(jp='renka.iwamoto', zh='岩本蓮加'),
+	    dict(jp='minami.umezawa', zh='梅澤美波'),
+	    dict(jp='momoko.oozono', zh='大園桃子'),
+	    dict(jp='shiori.kubo', zh='久保史緒里'),
+	    dict(jp='tamami.sakaguchi', zh='阪口珠美'),
+	    dict(jp='kaede.satou', zh='佐藤楓'),
+	    dict(jp='reno.nakamura', zh='中村麗乃'),
+	    dict(jp='hazuki.mukai', zh='向井 葉月'),
+	    dict(jp='mizuki.yamashita', zh='山下美月'),
+	    dict(jp='ayanochristie.yoshida', zh='吉田綾乃クリスティー'),
         dict(jp='chiharu.saito', zh='齋藤ちはる'),
         dict(jp='kotoko.sasaki', zh='佐々木琴子'),
         dict(jp='mahiro.kawamura', zh='川村真洋'),
