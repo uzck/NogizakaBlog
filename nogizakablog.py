@@ -72,7 +72,7 @@ def download_member_blog(member_name, page, day):
                             info = get_image_file_name(title[0].get('src'))
                             if info != None:
                                 file_name = final_address + '/' + info[3]
-                                if not download_pic(url.get('href'), file_name):
+                                if not download_pic(url.get('href'), file_name, post_time, daytime):
                                     download_thumbnail(
                                         title[0].get('src'), file_name)
                 elif image_urls[0].get('href').startswith(
@@ -148,16 +148,21 @@ def is_file_exisst(file_name):
         return False
 
 
-def download_pic(image_url, image_name):
+def download_pic(image_url, image_name, post_time, daytime):
     """从托管服务器下载图片 距离当前日期超过20天的无法下载"""
     if not is_file_exisst(image_name):
         try:
             result1 = requests.get(image_url)
             cookie = result1.cookies
             if cookie != {}:
-                link = image_url.replace(
-                    'http://dcimg.awalker.jp/img1.php?id',
-                    'http://dcimg.awalker.jp/img2.php?sec_key')
+                if int(post_time[0]) >= 2018 and int(post_time[1]) >=8 and int(daytime) >= 31:
+                    link = image_url.replace(
+                        'http://dcimg.awalker.jp/view/',
+                        'http://dcimg.awalker.jp/i/')
+                else:
+                    link = image_url.replace(
+                        'http://dcimg.awalker.jp/img1.php?id',
+                        'http://dcimg.awalker.jp/img2.php?sec_key')
                 # 下载图片前必须先访问img1.php获取cookie
                 result2 = requests.get(link, cookies=cookie, timeout=5)
                 print(image_name + ' 下载中...')
@@ -166,9 +171,9 @@ def download_pic(image_url, image_name):
                         f.write(chunk)
                 print(image_name + ' 下载成功')
                 return True
-        except:
+        except Exception as e:
             print(image_url + ' 下载失败')
-            download_pic(image_url, image_name)
+            download_pic(image_url, image_name, post_time, daytime)
     return False
 
 
