@@ -66,6 +66,7 @@ def download_member_blog(member_name, page, day):
                 # 托管的图片
                 if image_urls[0].get('href').startswith(
                         'http://dcimg.awalker.jp'):
+                    print("托管图片")    
                     for url in image_urls:
                         title = url.find_all('img')
                         if len(title) > 0:
@@ -152,6 +153,16 @@ def download_pic(image_url, image_name, post_time, daytime):
     """从托管服务器下载图片 距离当前日期超过20天的无法下载"""
     if not is_file_exisst(image_name):
         try:
+            if image_url.startswith("http://dcimg.awalker.jp/view"):
+                result1 = requests.get(image_url)
+                cookie = result1.cookies
+                if cookie != {}:
+                    result2 = requests.get(image_url.replace('http://dcimg.awalker.jp/view/',
+                        'http://dcimg.awalker.jp/i/'), cookies=cookie)
+                with open(image_name, 'wb') as f:
+                    for chunk in result2.iter_content(chunk_size=1024):
+                        f.write(chunk)
+                return True
             result1 = requests.get(image_url)
             cookie = result1.cookies
             if cookie != {}:
@@ -159,6 +170,12 @@ def download_pic(image_url, image_name, post_time, daytime):
                     link = image_url.replace(
                         'http://dcimg.awalker.jp/view/',
                         'http://dcimg.awalker.jp/i/')
+                    print(link)
+                    result2 = requests.get(link, timeout=5)
+                    with open(image_name, 'wb') as f:
+                        for chunk in result2.iter_content(chunk_size=1024):
+                            f.write(chunk)
+                    return True
                 else:
                     link = image_url.replace(
                         'http://dcimg.awalker.jp/img1.php?id',
